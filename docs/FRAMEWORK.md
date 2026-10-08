@@ -8,15 +8,15 @@ First category: https://genai.owasp.org/llmrisk/llm01-prompt-injection/
 | ID | Category | Status |
 | --- | --- | --- |
 | LLM01 | Prompt Injection | First teaching lab implemented |
-| LLM02 | Sensitive Information Disclosure | Planned |
-| LLM03 | Supply Chain | Planned |
-| LLM04 | Data and Model Poisoning | Planned |
-| LLM05 | Improper Output Handling | Planned |
-| LLM06 | Excessive Agency | Planned |
-| LLM07 | System Prompt Leakage | Planned |
-| LLM08 | Vector and Embedding Weaknesses | Planned |
-| LLM09 | Misinformation | Planned |
-| LLM10 | Unbounded Consumption | Planned |
+| LLM02 | Sensitive Information Disclosure | Synthetic cross-customer context disclosure |
+| LLM03 | Supply Chain | Inert prompt-bundle integrity verification |
+| LLM04 | Data and Model Poisoning | Knowledge-document ingestion poisoning, no training |
+| LLM05 | Improper Output Handling | Inert HTML interpretation versus encoding |
+| LLM06 | Excessive Agency | Model action → isolated local outbox adapter |
+| LLM07 | System Prompt Leakage | Fictional internal routing label |
+| LLM08 | Vector and Embedding Weaknesses | Sparse cosine retrieval with tenant filtering |
+| LLM09 | Misinformation | False draft claim and source/value verification |
+| LLM10 | Unbounded Consumption | Projected-work budget admission, hard demo cap |
 
 OWASP is a risk taxonomy, not a simulator. The implementation teaches one scenario
 per selected category; a lab cannot demonstrate every possible variant.
@@ -30,4 +30,3 @@ before claiming benchmark findings.
 This first defense removes document context for an approved-policy-only task.
 It sacrifices arbitrary document summarization to enforce a specific boundary.
 Sources and examples are teaching material; no novel attack is claimed.
-

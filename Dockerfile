@@ -1,6 +1,6 @@
 FROM python:3.12-slim
 WORKDIR /app
-COPY app.py index.html disclosure.html ./
+COPY app.py scenarios.py index.html disclosure.html scenario.html ./
 USER 65532:65532
 ENV BIND=0.0.0.0 PORT=8088 PYTHONDONTWRITEBYTECODE=1
 EXPOSE 8088

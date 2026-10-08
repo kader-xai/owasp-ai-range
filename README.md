@@ -2,7 +2,7 @@
 Independent educational project aligned to the OWASP LLM Top 10:2025.
 Not an official OWASP project or endorsement.
 
-## First milestone
+## Local range
 The workspace includes Explanation, Challenge mode, Interception & integrations,
 progressive hints, attempt history, JSON export, and a local mock task tool.
 See docs/WORKSPACE.md for proxy replay instructions and integration scope.
@@ -55,11 +55,16 @@ python3 -m unittest discover -s tests -v
 Tests cover simulation behavior, validation, and the real backend's source-selection
 boundary with a mocked transport. They do not test model robustness.
 
-## Roadmap
+## Category experiments
 All ten categories appear in the UI with explicit planned/implemented status.
-Build and review one lab at a time. LLM01 and LLM02 are implemented.
+All ten now have focused local experiments, not complete coverage of each category.
 Open http://127.0.0.1:8088/llm02 for the synthetic cross-customer disclosure lab.
-See [LLM02 guide](docs/LLM02.md). LLM03 supply chain is next.
+Open http://127.0.0.1:8088/labs/LLM03 through /labs/LLM10 for the remaining labs.
+See [experiment guide](docs/EXPERIMENTS.md), [verification notes](docs/EXPERIMENT-VERIFICATION.md),
+and [LLM02 guide](docs/LLM02.md). Every lab has explanation, challenge, bounded
+vulnerable/defended paths, evidence export, and local-model support. LLM03–10
+also share a local review-task adapter. Only synthetic local state is affected.
+Image prompt injection remains planned; Qwen2.5:1.5b is text-only.
 See docs/FRAMEWORK.md for sources and scope.
 
 Local development only. Public hosting is a later milestone after isolation,

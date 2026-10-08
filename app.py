@@ -3,6 +3,7 @@ import json, os, urllib.request
 from threading import Lock
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from scenarios import SCENARIOS, run_scenario
 
 CATEGORIES = ["Prompt Injection", "Sensitive Information Disclosure", "Supply Chain",
               "Data and Model Poisoning", "Improper Output Handling", "Excessive Agency",
@@ -61,18 +62,23 @@ def model_status():
         return {'available': False, 'model': model, 'loaded': False}
 
 def create_task(data):
+    lab = data.get('lab', 'LLM01:2025')
+    if lab not in [f'LLM{i+1:02d}:2025' for i in range(len(CATEGORIES))]:
+        raise ValueError('Invalid task lab')
     if data.get('mode') not in ('vulnerable', 'defended') or data.get('backend') not in ('simulation', 'ollama') or not isinstance(data.get('attack_observed'), bool):
         raise ValueError('Invalid task input')
     with TASK_LOCK:
         if len(TASKS) >= 1000:
             raise ValueError('Local task capacity reached')
-        task = {'id': len(TASKS) + 1, 'title': 'Review LLM01 prompt-injection observation',
+        task = {'id': len(TASKS) + 1, 'lab': lab, 'title': 'Review ' + lab + ' observation',
                 'mode': data['mode'], 'backend': data['backend'],
                 'attack_observed': data['attack_observed'], 'status': 'open', 'adapter': 'local-memory'}
         TASKS.append(task)
         return task
 
 def run_lab(data):
+    if data.get('lab') in SCENARIOS:
+        return run_scenario(data)
     if data.get('lab') == 'LLM02:2025':
         return run_disclosure(data)
     if data.get('lab', 'LLM01:2025') != 'LLM01:2025':
@@ -127,6 +133,8 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_GET(self):
+        if self.path == '/api/scenarios':
+            return self.send_json(200, SCENARIOS)
         if self.path == '/api/model-status':
             return self.send_json(200, model_status())
         if self.path == '/api/tasks':
@@ -136,14 +144,15 @@ class Handler(BaseHTTPRequestHandler):
             return self.send_json(200, {"status": "ok"})
         if self.path == "/api/labs":
             return self.send_json(200, [{"id": f"LLM{i+1:02d}:2025", "name": name,
-                "status": "implemented" if i < 2 else "planned"} for i, name in enumerate(CATEGORIES)])
-        if self.path not in ('/', '/llm02'):
+                "status": "implemented" if i < 2 or f'LLM{i+1:02d}:2025' in SCENARIOS else "planned"} for i, name in enumerate(CATEGORIES)])
+        scenario_page = self.path.startswith('/labs/') and self.path[6:] + ':2025' in SCENARIOS
+        if self.path not in ('/', '/llm02') and not scenario_page:
             return self.send_json(404, {"error": "Not found"})
-        body = Path(__file__).with_name('disclosure.html' if self.path == '/llm02' else 'index.html').read_bytes()
+        body = Path(__file__).with_name('scenario.html' if scenario_page else 'disclosure.html' if self.path == '/llm02' else 'index.html').read_bytes()
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
-        self.send_header("Content-Security-Policy", "default-src 'self'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; frame-ancestors 'none'")
+        self.send_header("Content-Security-Policy", "default-src 'self'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; frame-src 'self'; frame-ancestors 'none'")
         self.end_headers()
         self.wfile.write(body)
 

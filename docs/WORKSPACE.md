@@ -13,10 +13,11 @@ document field, and replay in Repeater or the request editor. No custom extensio
 is installed. External replays do not update browser history. Conventional scans
 and model-safety evaluation are different tasks.
 
-POST /api/tasks accepts mode, backend, and boolean attack_observed. It returns a
+POST /api/tasks accepts mode, backend, boolean attack_observed, and an optional
+lab ID (defaults to LLM01:2025). It returns a
 local in-memory review task. GET /api/tasks lists tasks. These are client-submitted
 observations, not validated security findings. No SaaS calls occur. Restart clears
 tasks; capacity is 1000. Real integrations require a chosen provider and scope.
 
-LLM01 text and LLM02 record disclosure are active. Images and the remaining eight categories are planned. Scripted
+All ten categories have focused experiments. Image input is planned. Scripted
 mode is labeled. Ollama requires a real model service. Docker launch is pending.

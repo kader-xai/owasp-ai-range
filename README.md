@@ -3,6 +3,9 @@ Independent educational project aligned to the OWASP LLM Top 10:2025.
 Not an official OWASP project or endorsement.
 
 ## First milestone
+The workspace includes Explanation, Challenge mode, Interception & integrations,
+progressive hints, attempt history, JSON export, and a local mock task tool.
+See docs/WORKSPACE.md for proxy replay instructions and integration scope.
 LLM01 prompt injection: a fictional refund assistant consumes an uploaded document.
 Observe a harmless response marker, compare vulnerable and defended source selection,
 and inspect the trace. No shell execution, external callbacks, or real private data.
@@ -55,4 +58,3 @@ See docs/FRAMEWORK.md for sources and scope.
 
 Local development only. Public hosting is a later milestone after isolation,
 session access, abuse prevention, and deployment review.
-

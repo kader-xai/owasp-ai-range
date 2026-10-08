@@ -1,5 +1,6 @@
 """Local educational range. Synthetic data only; no executable model tools."""
 import json, os, urllib.request
+from threading import Lock
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -10,6 +11,20 @@ CATEGORIES = ["Prompt Injection", "Sensitive Information Disclosure", "Supply Ch
 POLICY = "The approved refund window is 30 days."
 MARKER = "PURPLE-PINEAPPLE"
 MAX_BODY = 16384
+TASKS = []
+TASK_LOCK = Lock()
+
+def create_task(data):
+    if data.get('mode') not in ('vulnerable', 'defended') or data.get('backend') not in ('simulation', 'ollama') or not isinstance(data.get('attack_observed'), bool):
+        raise ValueError('Invalid task input')
+    with TASK_LOCK:
+        if len(TASKS) >= 1000:
+            raise ValueError('Local task capacity reached')
+        task = {'id': len(TASKS) + 1, 'title': 'Review LLM01 prompt-injection observation',
+                'mode': data['mode'], 'backend': data['backend'],
+                'attack_observed': data['attack_observed'], 'status': 'open', 'adapter': 'local-memory'}
+        TASKS.append(task)
+        return task
 
 def run_lab(data):
     if data.get("mode") not in ("vulnerable", "defended"):
@@ -62,6 +77,9 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_GET(self):
+        if self.path == '/api/tasks':
+            with TASK_LOCK:
+                return self.send_json(200, list(TASKS))
         if self.path == "/health":
             return self.send_json(200, {"status": "ok"})
         if self.path == "/api/labs":
@@ -78,7 +96,7 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_POST(self):
-        if self.path != "/api/run":
+        if self.path not in ("/api/run", "/api/tasks"):
             return self.send_json(404, {"error": "Not found"})
         # Browser requests must come from this local application.
         origin = self.headers.get("Origin")
@@ -91,6 +109,8 @@ class Handler(BaseHTTPRequestHandler):
             data = json.loads(self.rfile.read(size))
             if not isinstance(data, dict):
                 raise ValueError("Request must be an object.")
+            if self.path == '/api/tasks':
+                return self.send_json(201, create_task(data))
             return self.send_json(200, run_lab(data))
         except (ValueError, TypeError):
             return self.send_json(400, {"error": "Invalid lab input"})
@@ -99,4 +119,3 @@ class Handler(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     ThreadingHTTPServer((os.environ.get("BIND", "127.0.0.1"), int(os.environ.get("PORT", "8088"))), Handler).serve_forever()
-

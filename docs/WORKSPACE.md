@@ -18,5 +18,5 @@ local in-memory review task. GET /api/tasks lists tasks. These are client-submit
 observations, not validated security findings. No SaaS calls occur. Restart clears
 tasks; capacity is 1000. Real integrations require a chosen provider and scope.
 
-Only LLM01 text is active. Images and other categories remain planned. Scripted
+LLM01 text and LLM02 record disclosure are active. Images and the remaining eight categories are planned. Scripted
 mode is labeled. Ollama requires a real model service. Docker launch is pending.

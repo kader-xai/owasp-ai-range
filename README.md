@@ -57,7 +57,9 @@ boundary with a mocked transport. They do not test model robustness.
 
 ## Roadmap
 All ten categories appear in the UI with explicit planned/implemented status.
-Build and review one lab at a time. LLM02 sensitive information disclosure is next.
+Build and review one lab at a time. LLM01 and LLM02 are implemented.
+Open http://127.0.0.1:8088/llm02 for the synthetic cross-customer disclosure lab.
+See [LLM02 guide](docs/LLM02.md). LLM03 supply chain is next.
 See docs/FRAMEWORK.md for sources and scope.
 
 Local development only. Public hosting is a later milestone after isolation,

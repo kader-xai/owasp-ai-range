@@ -29,13 +29,17 @@ Open http://127.0.0.1:8088. The published port binds to localhost.
 The container runs as a non-root user with a read-only filesystem.
 
 ## Optional real local model
-Install/start Ollama and download a model separately:
+Install Ollama from https://ollama.com/download, then start the complete native lab:
 ```sh
-ollama pull qwen2.5:3b
+bash scripts/start-local.sh
 ```
+The script downloads the model (about 986 MB on first run), starts Ollama if needed,
+and runs the application. Stop an existing app on port 8088 first. Ctrl+C stops
+the app and any Ollama daemon started by the script, not a pre-existing daemon.
 Select Ollama in the UI. Docker uses host.docker.internal; native Python uses localhost.
 Configure OLLAMA_MODEL and OLLAMA_URL through the environment as needed.
-The app never installs or downloads a model on its own.
+The web application itself never installs or downloads a model.
+See [local model guide](docs/LOCAL-MODEL.md) for Docker, hardware, and real tests.
 
 ## Demo sequence
 1. Ordinary document, vulnerable mode: policy summary.

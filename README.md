@@ -64,7 +64,9 @@ See [experiment guide](docs/EXPERIMENTS.md), [verification notes](docs/EXPERIMEN
 and [LLM02 guide](docs/LLM02.md). Every lab has explanation, challenge, bounded
 vulnerable/defended paths, evidence export, and local-model support. LLM03–10
 also share a local review-task adapter. Only synthetic local state is affected.
-Image prompt injection remains planned; Qwen2.5:1.5b is text-only.
+An optional real vision-model image scenario is at http://127.0.0.1:8088/vision.
+See [vision setup and scope](docs/VISION.md). Qwen2.5:1.5b remains the text default;
+the image scenario uses a separate granite3.2-vision:2b download.
 See docs/FRAMEWORK.md for sources and scope.
 
 Local development only. Public hosting is a later milestone after isolation,

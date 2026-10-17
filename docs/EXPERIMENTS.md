@@ -100,5 +100,6 @@ reset on app restart; per-run outbox entries do not persist. Replay POST /api/ru
 locally with Burp/ZAP or browser tools; these proxies have not been independently
 execution-tested. Real personal/customer data must never be used here.
 
-Image injection is still planned. The current small model is text-only.
+Image-input testing now has a separate [vision-model scenario](VISION.md).
+The default Qwen text model remains text-only.
 Public release needs isolation, authentication, abuse limits, and Docker/runtime review.

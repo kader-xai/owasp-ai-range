@@ -4,6 +4,7 @@ from threading import Lock
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from scenarios import SCENARIOS, run_scenario
+from vision import run_vision
 
 CATEGORIES = ["Prompt Injection", "Sensitive Information Disclosure", "Supply Chain",
               "Data and Model Poisoning", "Improper Output Handling", "Excessive Agency",
@@ -77,6 +78,8 @@ def create_task(data):
         return task
 
 def run_lab(data):
+    if data.get('lab') == 'LLM01:2025' and data.get('scenario') == 'image':
+        return run_vision(data)
     if data.get('lab') in SCENARIOS:
         return run_scenario(data)
     if data.get('lab') == 'LLM02:2025':
@@ -146,9 +149,9 @@ class Handler(BaseHTTPRequestHandler):
             return self.send_json(200, [{"id": f"LLM{i+1:02d}:2025", "name": name,
                 "status": "implemented" if i < 2 or f'LLM{i+1:02d}:2025' in SCENARIOS else "planned"} for i, name in enumerate(CATEGORIES)])
         scenario_page = self.path.startswith('/labs/') and self.path[6:] + ':2025' in SCENARIOS
-        if self.path not in ('/', '/llm02') and not scenario_page:
+        if self.path not in ('/', '/llm02', '/vision') and not scenario_page:
             return self.send_json(404, {"error": "Not found"})
-        body = Path(__file__).with_name('scenario.html' if scenario_page else 'disclosure.html' if self.path == '/llm02' else 'index.html').read_bytes()
+        body = Path(__file__).with_name('vision.html' if self.path == '/vision' else 'scenario.html' if scenario_page else 'disclosure.html' if self.path == '/llm02' else 'index.html').read_bytes()
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
@@ -165,11 +168,13 @@ class Handler(BaseHTTPRequestHandler):
             return self.send_json(403, {"error": "Cross-origin requests rejected"})
         try:
             size = int(self.headers.get("Content-Length", "0"))
-            if size <= 0 or size > MAX_BODY:
+            if size <= 0 or size > (1500000 if self.path == '/api/run' else MAX_BODY):
                 return self.send_json(413, {"error": "Invalid request size"})
             data = json.loads(self.rfile.read(size))
             if not isinstance(data, dict):
                 raise ValueError("Request must be an object.")
+            if size > MAX_BODY and not (data.get('lab') == 'LLM01:2025' and data.get('scenario') == 'image'):
+                return self.send_json(413, {'error': 'Text request exceeds lab limit'})
             if self.path == '/api/tasks':
                 return self.send_json(201, create_task(data))
             return self.send_json(200, run_lab(data))

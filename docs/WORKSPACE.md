@@ -19,5 +19,6 @@ local in-memory review task. GET /api/tasks lists tasks. These are client-submit
 observations, not validated security findings. No SaaS calls occur. Restart clears
 tasks; capacity is 1000. Real integrations require a chosen provider and scope.
 
-All ten categories have focused experiments. Image input is planned. Scripted
+All ten categories have focused experiments. Optional image input uses /vision and
+a separately installed local vision model. Scripted
 mode is labeled. Ollama requires a real model service. Docker launch is pending.

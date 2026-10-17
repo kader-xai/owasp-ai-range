@@ -70,8 +70,8 @@ application boundary, not a claim that prompting or model alignment solves injec
 - If Ollama is unavailable, start `ollama serve`; use Check model connection.
 - If inference fails, inspect Ollama logs and model availability with `ollama list`.
 - First inference may be slower while loading weights. No external tools execute.
-- This text-only model cannot read images. A genuine vision-model/image lab is a
-  separate planned scenario, not silently simulated OCR.
+- This text-only model cannot read images. Use the separate [vision-model lab](VISION.md)
+  for genuine image input, not silently simulated OCR.
 - Agent frameworks are not needed for LLM01. Add an isolated local tool adapter
   when implementing excessive agency; never connect real customer accounts here.
 - Local use only. Do not expose either service to the public Internet.

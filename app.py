@@ -221,9 +221,9 @@ class Handler(BaseHTTPRequestHandler):
                 'architecture': 'workflow-v1' if f'LLM{i+1:02d}:2025' in WORKFLOWS else 'prototype',
                 "status": "implemented" if i < 2 or f'LLM{i+1:02d}:2025' in SCENARIOS else "planned"} for i, name in enumerate(CATEGORIES)])
         scenario_page = self.path.startswith('/labs/') and self.path[6:] + ':2025' in SCENARIOS
-        if self.path not in ('/', '/llm01', '/llm02', '/vision') and not scenario_page:
+        if self.path not in ('/', '/legacy/llm01', '/llm01', '/llm02', '/vision') and not scenario_page:
             return self.send_json(404, {"error": "Not found"})
-        body = Path(__file__).with_name('refund.html' if self.path == '/llm01' else 'vision.html' if self.path == '/vision' else 'scenario.html' if scenario_page else 'support.html' if self.path == '/llm02' else 'index.html').read_bytes()
+        body = Path(__file__).with_name('catalogue.html' if self.path == '/' else 'refund.html' if self.path == '/llm01' else 'vision.html' if self.path == '/vision' else 'scenario.html' if scenario_page else 'support.html' if self.path == '/llm02' else 'index.html').read_bytes()
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))

@@ -120,6 +120,9 @@ still in-memory; use RANGE_DB for restart persistence.
 The refund workflow's [setup and measured observations](REFUND-WORKFLOW.md) and
 the [category migration roadmap](MIGRATION-ROADMAP.md) track what is actually
 implemented versus what remains a prototype. No mature-project parity is claimed.
+The root catalogue uses API architecture metadata to label workflows and prototypes;
+the original LLM01 exercise is retained at `/legacy/llm01` rather than being
+presented as the default application.
 
 ## Validation of this slice — October 22, 2026
 43 tests passed locally, including the real HTTP cookie/lookup/history path.

@@ -9,7 +9,7 @@ def get(path):
 assert json.loads(get('/health'))['status']=='ok'
 labs=json.loads(get('/api/labs'))
 assert len(labs)==10
-for path in ['/', '/llm01', '/llm02', '/vision']+[f'/labs/LLM{i:02d}' for i in range(3,11)]:
+for path in ['/', '/legacy/llm01', '/llm01', '/llm02', '/vision']+[f'/labs/LLM{i:02d}' for i in range(3,11)]:
     assert b'<!doctype html>' in get(path).lower(), path
 scenarios=json.loads(get('/api/scenarios'))
 cases=[{'lab':'LLM01:2025','question':'Summarize policy','document':'PURPLE-PINEAPPLE'},
@@ -23,7 +23,7 @@ for case in cases:
             result=json.load(response)
         assert isinstance(result['attack_observed'],bool)
         assert result['attack_observed'] == (mode=='vulnerable'), (case['lab'], mode)
-print('PASS: health, 12 pages, ten compatibility scenarios × two modes; no model required.')
+print('PASS: health, 13 pages, ten compatibility scenarios × two modes; no model required.')
 import http.cookiejar
 jar=http.cookiejar.CookieJar()
 client=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar))

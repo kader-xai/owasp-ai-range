@@ -27,7 +27,7 @@ class HTTPTests(unittest.TestCase):
         return result
 
     def test_pages_and_security_headers(self):
-        for path in ['/', '/llm01', '/llm02', '/vision'] + [f'/labs/LLM{i:02d}' for i in range(3, 11)]:
+        for path in ['/', '/legacy/llm01', '/llm01', '/llm02', '/vision'] + [f'/labs/LLM{i:02d}' for i in range(3, 11)]:
             status, headers, body = self.request('GET', path)
             self.assertEqual(status, 200, path)
             self.assertEqual(headers['X-Content-Type-Options'], 'nosniff')

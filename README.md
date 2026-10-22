@@ -22,7 +22,7 @@ remain focused prototype experiments.
 > Do not expose this application or Ollama to the Internet. This is an independent
 > project, not an official OWASP project, certification, or endorsement.
 
-![Local challenge workspace](docs/all-categories-preview.png)
+![Workflow and prototype catalogue](docs/workflow-catalogue-preview.png)
 
 ## Start in under a minute—no API key or model required
 

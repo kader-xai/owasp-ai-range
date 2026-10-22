@@ -1,6 +1,11 @@
 # Changelog
 
 ## Unreleased — workflow architecture migration
+- LLM01 refund workflow: immutable attachment revisions, structured real-model
+  proposals, server policy enforcement and atomic quote/evidence transactions.
+- Shared workflow registry and OpenAPI document; preview mode does not simulate inference.
+- 54 tests cover quote rollback, cross-workspace quote isolation, workflow API
+  contracts, capacity admission and both application boundaries.
 - LLM02 RangeDesk: SQLite ticket repository, isolated server-owned workspaces,
   domain service, offline record serializer / Ollama adapter, and stored attempts.
 - Authorization and answer disclosure measured separately; random per-workspace

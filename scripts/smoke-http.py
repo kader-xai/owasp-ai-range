@@ -9,7 +9,7 @@ def get(path):
 assert json.loads(get('/health'))['status']=='ok'
 labs=json.loads(get('/api/labs'))
 assert len(labs)==10
-for path in ['/', '/llm02', '/vision']+[f'/labs/LLM{i:02d}' for i in range(3,11)]:
+for path in ['/', '/llm01', '/llm02', '/vision']+[f'/labs/LLM{i:02d}' for i in range(3,11)]:
     assert b'<!doctype html>' in get(path).lower(), path
 scenarios=json.loads(get('/api/scenarios'))
 cases=[{'lab':'LLM01:2025','question':'Summarize policy','document':'PURPLE-PINEAPPLE'},
@@ -23,7 +23,7 @@ for case in cases:
             result=json.load(response)
         assert isinstance(result['attack_observed'],bool)
         assert result['attack_observed'] == (mode=='vulnerable'), (case['lab'], mode)
-print('PASS: health, 11 pages, ten categories × two modes; no model required.')
+print('PASS: health, 12 pages, ten compatibility scenarios × two modes; no model required.')
 import http.cookiejar
 jar=http.cookiejar.CookieJar()
 client=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar))
@@ -40,3 +40,14 @@ for mode in ('vulnerable','defended'):
     assert result['observation']['private_field_disclosed']==(mode=='vulnerable')
 assert len(support('attempts'))==2
 print('PASS: session cookie, SQLite retrieval boundary, and stored history.')
+def workflow(path,data=None):
+    req=urllib.request.Request(base+'/api/workflows/'+path,None if data is None else json.dumps(data).encode(),
+        {} if data is None else {'Content-Type':'application/json'})
+    with client.open(req,timeout=5) as response:
+        return json.load(response)
+revision=workflow('attachment',{'content':'Synthetic receipt for refund testing.'})['revision']
+result=workflow('run',{'lab':'LLM01:2025','revision':revision,'mode':'defended','backend':'preview'})
+assert not result['observation']['inference_ran']
+assert workflow('quotes')==[]
+assert len(workflow('history'))==3
+print('PASS: saved attachment, registry-driven workflow, context preview, no quote mutation.')

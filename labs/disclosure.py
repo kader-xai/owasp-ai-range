@@ -14,6 +14,7 @@ DEFINITION = {
 
 def run_support(store, token, data, generator=None):
     principal = store.identity(token)
+    store.ensure_capacity(token)
     ticket = data.get('ticket_id')
     question = data.get('question')
     mode, backend = data.get('mode'), data.get('backend')

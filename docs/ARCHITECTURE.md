@@ -86,9 +86,40 @@ configuration has not been execution-tested.
 6. Unit, repository, HTTP, isolation, invalid-input, and negative tests.
 7. Browser verification and Docker smoke verification.
 
-LLM02 is the first migrated workflow. LLM01 and LLM03–LLM10 still need equivalent
+LLM01 and LLM02 are migrated workflows. LLM03–LLM10 still need equivalent
 domain-workflow migrations. Real embedding stores, model artifact provenance,
 grounded answer pipelines, and bounded agent workflows require separate milestones.
+
+## LLM01 / Refund operations
+`labs/refund.py` turns a saved attachment into a structured model proposal. The
+authorized task and 30-day policy are server-owned. The attachment is the attacker-
+controlled input; it is stored as an immutable per-workspace revision before use.
+
+Vulnerable mode trusts a schema-valid proposal's value and stores a synthetic
+quote. Defended mode receives the same context, but the application only accepts
+the approved value. Both reject malformed/out-of-bounds proposals. Quote insertion
+and attempt insertion occur in one SQLite transaction; a failure rolls back both.
+Maximum 3,650 days is an independent fixture bound, not an authorization policy.
+
+The `preview` backend shows actual context with no model call and no quote mutation.
+Only real Ollama inference (or injected test adapters in unit tests) generates
+proposals. There is no marker trigger or canned vulnerable response in this workflow.
+
+`labs/registry.py` owns workflow definitions and dispatch. `/api/workflows` exposes
+metadata; `/api/openapi.json` describes the workflow contract. Additional APIs:
+- `POST /api/workflows/attachment`: save content and return a revision.
+- `POST /api/workflows/run`: run a registered lab in the caller's workspace.
+- `GET /api/workflows/quotes`: list that workspace's applied synthetic quotes.
+- `GET /api/workflows/history`: stored attempts from both migrated workflows.
+
+New workspace cookies use Path=/api so both workflows share a learner session.
+An older Path=/api/support cookie may require creating a fresh workspace for new
+workflow endpoints. History is not removed by this operation. Default storage is
+still in-memory; use RANGE_DB for restart persistence.
+
+The refund workflow's [setup and measured observations](REFUND-WORKFLOW.md) and
+the [category migration roadmap](MIGRATION-ROADMAP.md) track what is actually
+implemented versus what remains a prototype. No mature-project parity is claimed.
 
 ## Validation of this slice — October 22, 2026
 43 tests passed locally, including the real HTTP cookie/lookup/history path.

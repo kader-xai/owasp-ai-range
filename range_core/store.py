@@ -22,6 +22,14 @@ class WorkspaceStore:
                 CREATE TABLE IF NOT EXISTS attempts(
                     id INTEGER PRIMARY KEY, workspace TEXT REFERENCES workspaces(id),
                     created_at TEXT NOT NULL, input_json TEXT NOT NULL, result_json TEXT NOT NULL);
+                CREATE TABLE IF NOT EXISTS attachments(
+                    workspace TEXT REFERENCES workspaces(id), revision INTEGER, content TEXT NOT NULL,
+                    PRIMARY KEY(workspace,revision));
+                CREATE TABLE IF NOT EXISTS refund_quotes(
+                    id INTEGER PRIMARY KEY, workspace TEXT REFERENCES workspaces(id),
+                    revision INTEGER, days INTEGER NOT NULL, reference TEXT NOT NULL,
+                    mode TEXT NOT NULL, created_at TEXT NOT NULL);
+                CREATE INDEX IF NOT EXISTS attempts_workspace ON attempts(workspace,id);
             ''')
 
     def create(self):
@@ -66,9 +74,49 @@ class WorkspaceStore:
             return [dict(r) for r in self.connection.execute(query, params)]
 
     def record(self, token, inputs, result):
+        return self.complete(token, inputs, result)
+
+    def attachment(self, token, content):
+        self.identity(token)
+        if not isinstance(content, str) or not content.strip() or len(content) > 8000:
+            raise ValueError('Attachment must be 1–8000 characters')
         with self.lock, self.connection:
+            revision = self.connection.execute('SELECT COALESCE(MAX(revision),0)+1 FROM attachments WHERE workspace=?',(token,)).fetchone()[0]
+            if revision > 100:
+                raise ValueError('Attachment capacity reached')
+            self.connection.execute('INSERT INTO attachments VALUES(?,?,?)',(token,revision,content))
+            return revision
+
+    def read_attachment(self, token, revision):
+        self.identity(token)
+        if type(revision) is not int or revision < 1:
+            raise ValueError('Invalid attachment revision')
+        with self.lock:
+            row = self.connection.execute('SELECT content FROM attachments WHERE workspace=? AND revision=?',(token,revision)).fetchone()
+            if row is None:
+                raise ValueError('Unknown attachment revision')
+            return row['content']
+
+    def quotes(self, token):
+        self.identity(token)
+        with self.lock:
+            return [dict(r) for r in self.connection.execute(
+                'SELECT id,revision,days,reference,mode,created_at FROM refund_quotes WHERE workspace=? ORDER BY id DESC',(token,))]
+
+    def ensure_capacity(self, token):
+        self.identity(token)
+        with self.lock:
             if self.connection.execute('SELECT COUNT(*) FROM attempts WHERE workspace=?',(token,)).fetchone()[0] >= 200:
                 raise ValueError('Workspace attempt capacity reached')
+
+    def complete(self, token, inputs, result, quote=None):
+        """Commit domain effect and observation together or roll both back."""
+        with self.lock, self.connection:
+            self.ensure_capacity(token)
+            if quote is not None:
+                cursor = self.connection.execute('INSERT INTO refund_quotes(workspace,revision,days,reference,mode,created_at) VALUES(?,?,?,?,?,?)',
+                    (token,inputs['revision'],quote['days'],quote['reference'],inputs['mode'],self.now()))
+                result['quote_id'] = cursor.lastrowid
             cursor = self.connection.execute('INSERT INTO attempts(workspace,created_at,input_json,result_json) VALUES(?,?,?,?)',
                 (token,self.now(),json.dumps(inputs),json.dumps(result)))
             return cursor.lastrowid

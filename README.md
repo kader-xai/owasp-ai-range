@@ -9,9 +9,14 @@ Built for self-study, instructor-led workshops, and reproducible demonstrations.
 
 **Maturity:** this is an early prototype, not feature- or quality-parity with mature
 OWASP applications. The [architecture migration](docs/ARCHITECTURE.md) replaces
-shortcut exercises with domain workflows. LLM02 now uses a SQLite support portal,
+shortcut exercises with domain workflows. LLM01 now processes saved attachments
+into synthetic refund quotes; LLM02 uses a SQLite support portal. Both have
 isolated learner workspaces and server-recorded observations; other categories
 remain focused prototype experiments.
+
+**Workflow entry points:** [Refund operations](http://127.0.0.1:8088/llm01) ·
+[Customer support](http://127.0.0.1:8088/llm02) ·
+[Workflow API contract](http://127.0.0.1:8088/api/openapi.json).
 
 > **Intentionally vulnerable. Run on localhost with synthetic data only.**
 > Do not expose this application or Ollama to the Internet. This is an independent

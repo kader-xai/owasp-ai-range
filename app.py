@@ -9,6 +9,8 @@ from vision import run_vision
 from http.cookies import SimpleCookie
 from range_core.store import WorkspaceStore
 from labs.disclosure import DEFINITION, run_support
+from labs.registry import WORKFLOWS, definitions, execute
+from range_core.contracts import openapi
 
 CATEGORIES = ["Prompt Injection", "Sensitive Information Disclosure", "Supply Chain",
               "Data and Model Poisoning", "Improper Output Handling", "Excessive Agency",
@@ -184,6 +186,17 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if not self.local_request():
             return
+        if self.path == '/api/openapi.json':
+            return self.send_json(200, openapi())
+        if self.path == '/api/workflows':
+            return self.send_json(200, definitions())
+        if self.path in ('/api/workflows/history', '/api/workflows/quotes'):
+            try:
+                token = self.workspace_token()
+                store = self.server.workspace_store
+                return self.send_json(200,store.quotes(token) if self.path.endswith('quotes') else store.history(token))
+            except PermissionError:
+                return self.send_json(401,{'error':'Start a learner workspace first'})
         if self.path == '/api/support/definition':
             return self.send_json(200, DEFINITION)
         if self.path in ('/api/support/workspace', '/api/support/attempts'):
@@ -205,12 +218,12 @@ class Handler(BaseHTTPRequestHandler):
             return self.send_json(200, {"status": "ok"})
         if self.path == "/api/labs":
             return self.send_json(200, [{"id": f"LLM{i+1:02d}:2025", "name": name,
-                'architecture': 'workflow-v1' if i == 1 else 'prototype',
+                'architecture': 'workflow-v1' if f'LLM{i+1:02d}:2025' in WORKFLOWS else 'prototype',
                 "status": "implemented" if i < 2 or f'LLM{i+1:02d}:2025' in SCENARIOS else "planned"} for i, name in enumerate(CATEGORIES)])
         scenario_page = self.path.startswith('/labs/') and self.path[6:] + ':2025' in SCENARIOS
-        if self.path not in ('/', '/llm02', '/vision') and not scenario_page:
+        if self.path not in ('/', '/llm01', '/llm02', '/vision') and not scenario_page:
             return self.send_json(404, {"error": "Not found"})
-        body = Path(__file__).with_name('vision.html' if self.path == '/vision' else 'scenario.html' if scenario_page else 'support.html' if self.path == '/llm02' else 'index.html').read_bytes()
+        body = Path(__file__).with_name('refund.html' if self.path == '/llm01' else 'vision.html' if self.path == '/vision' else 'scenario.html' if scenario_page else 'support.html' if self.path == '/llm02' else 'index.html').read_bytes()
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
@@ -221,7 +234,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         if not self.local_request():
             return
-        if self.path not in ("/api/run", "/api/tasks", '/api/support/start', '/api/support/chat'):
+        if self.path not in ("/api/run", "/api/tasks", '/api/support/start', '/api/support/chat', '/api/workflows/attachment', '/api/workflows/run'):
             return self.send_json(404, {"error": "Not found"})
         # Browser requests must come from this local application.
         if self.headers.get('Transfer-Encoding') or len(self.headers.get_all('Content-Length', [])) != 1:
@@ -243,12 +256,23 @@ class Handler(BaseHTTPRequestHandler):
             if self.path == '/api/support/start':
                 token = self.server.workspace_store.create()
                 self.send_response(201)
-                self.send_header('Set-Cookie','range_workspace='+token+'; HttpOnly; SameSite=Strict; Path=/api/support')
+                self.send_header('Set-Cookie','range_workspace='+token+'; HttpOnly; SameSite=Strict; Path=/api')
                 self.send_header('Content-Type','application/json')
                 self.send_header('Cache-Control','no-store')
                 self.end_headers()
                 self.wfile.write(b'{"principal":"alice","created":true}')
                 return
+            if self.path == '/api/workflows/attachment':
+                return self.send_json(201,{'revision':self.server.workspace_store.attachment(self.workspace_token(),data.get('content'))})
+            if self.path == '/api/workflows/run':
+                token = self.workspace_token()
+                if not RUN_SLOT.acquire(blocking=False):
+                    raise ValueError('Another experiment is running')
+                try:
+                    result = execute(data.get('lab'),self.server.workspace_store,token,data)
+                finally:
+                    RUN_SLOT.release()
+                return self.send_json(200,result)
             if self.path == '/api/support/chat':
                 token = self.workspace_token()
                 if not RUN_SLOT.acquire(blocking=False):

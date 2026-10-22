@@ -27,7 +27,7 @@ class HTTPTests(unittest.TestCase):
         return result
 
     def test_pages_and_security_headers(self):
-        for path in ['/', '/llm02', '/vision'] + [f'/labs/LLM{i:02d}' for i in range(3, 11)]:
+        for path in ['/', '/llm01', '/llm02', '/vision'] + [f'/labs/LLM{i:02d}' for i in range(3, 11)]:
             status, headers, body = self.request('GET', path)
             self.assertEqual(status, 200, path)
             self.assertEqual(headers['X-Content-Type-Options'], 'nosniff')
@@ -40,6 +40,7 @@ class HTTPTests(unittest.TestCase):
         self.assertEqual(len(json.loads(body)), 10)
         self.assertTrue(all(x['status'] == 'implemented' for x in json.loads(body)))
         self.assertEqual(self.request('GET', '/health')[0], 200)
+        self.assertEqual(json.loads(self.request('GET','/api/openapi.json')[2])['openapi'],'3.1.0')
 
     def test_dns_rebinding_and_cross_site(self):
         for headers in ({'Host':'attacker.example'}, {'Origin':'https://attacker.example'}, {'Sec-Fetch-Site':'cross-site'}):
@@ -98,3 +99,20 @@ class HTTPTests(unittest.TestCase):
         self.request('POST','/api/support/chat',json.dumps(data),{'Cookie':cookies[0],'Content-Type':'application/json'})
         _,_,body=self.request('GET','/api/support/attempts',headers={'Cookie':cookies[1]})
         self.assertEqual(json.loads(body),[])
+
+    def test_workflow_registry_attachment_and_preview(self):
+        _,headers,_=self.request('POST','/api/support/start','{}',{'Content-Type':'application/json'})
+        self.assertIn('Path=/api',headers['Set-Cookie'])
+        auth={'Cookie':headers['Set-Cookie'].split(';')[0],'Content-Type':'application/json'}
+        status,_,body=self.request('POST','/api/workflows/attachment',json.dumps({'content':'Fictional receipt'}),auth)
+        self.assertEqual(status,201)
+        revision=json.loads(body)['revision']
+        data={'lab':'LLM01:2025','revision':revision,'backend':'preview','mode':'vulnerable'}
+        status,_,body=self.request('POST','/api/workflows/run',json.dumps(data),auth)
+        self.assertEqual(status,200)
+        self.assertFalse(json.loads(body)['observation']['quote_applied'])
+        self.assertEqual(json.loads(self.request('GET','/api/workflows/quotes',headers=auth)[2]),[])
+        self.assertEqual(len(json.loads(self.request('GET','/api/workflows/history',headers=auth)[2])),1)
+        self.assertEqual(self.request('GET','/api/workflows/history')[0],401)
+        definitions=json.loads(self.request('GET','/api/workflows')[2])
+        self.assertEqual(len(definitions),2)

@@ -28,7 +28,8 @@ docker compose -f compose.local-model.yaml exec ollama ollama pull granite3.2-vi
 ```
 
 The default vision model is selected server-side; custom model overrides must
-be passed to the app container explicitly. Docker execution remains unverified.
+be passed to the app container explicitly. Docker app startup passed scripted CI
+smoke checks on October 22, 2026; Docker vision inference remains unverified.
 
 The task is narrowly policy-only: defended mode removes the image before
 inference. This sacrifices image functionality and is not a general multimodal

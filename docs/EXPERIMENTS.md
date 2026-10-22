@@ -2,8 +2,10 @@
 
 Run `bash scripts/start-local.sh`, then use the category buttons at
 http://127.0.0.1:8088. The same [native/Docker setup](LOCAL-MODEL.md) serves all
-pages. Dockerfile includes the shared scenario code and page. Docker execution
-has not been tested on this machine; do not infer that Compose validation is a launch test.
+pages. Dockerfile includes the shared scenario code and page. Docker app startup
+and scripted HTTP smoke checks passed in GitHub CI on October 22, 2026. Model-stack
+inference and GPU/vision container execution remain unverified. The development
+Mac still has no running Docker daemon; see [release evidence](RELEASE.md).
 
 For each topic: explanation → baseline → controlled example → same input with
 defense → inspect evidence → export. The simulation backend is a teaching rule;

@@ -21,4 +21,6 @@ tasks; capacity is 1000. Real integrations require a chosen provider and scope.
 
 All ten categories have focused experiments. Optional image input uses /vision and
 a separately installed local vision model. Scripted
-mode is labeled. Ollama requires a real model service. Docker launch is pending.
+mode is labeled. Ollama requires a real model service. Docker app startup and
+scripted smoke tests passed in GitHub CI on October 22, 2026; container-hosted
+model inference and GPU/vision execution remain unverified. See RELEASE.md.

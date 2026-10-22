@@ -15,9 +15,9 @@ aligned to the OWASP LLM Top 10:2025. Not an official OWASP project or endorseme
 - 33 local unit/integration tests pass.
 - Running native server passes health, eleven page routes, and ten scenarios in
   both modes without model calls.
-- CI separately builds and launches the non-root read-only container, then runs
-  the same smoke test. Check the release commit's actual Actions status before
-  treating this as verified container execution.
+- [GitHub Actions run 39727953918](https://github.com/kader-xai/owasp-ai-range/actions/runs/39727953918)
+  passed Python 3.12/3.13/3.14 tests and built/launched the non-root read-only
+  container, then passed all-category HTTP smoke checks in scripted mode.
 - Existing text/image model observations are historical, not new benchmark runs.
 - Selected-signature scan of reachable text history found no matches before
   release preparation; this limited check is not a full secret audit.

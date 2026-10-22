@@ -24,3 +24,19 @@ for case in cases:
         assert isinstance(result['attack_observed'],bool)
         assert result['attack_observed'] == (mode=='vulnerable'), (case['lab'], mode)
 print('PASS: health, 11 pages, ten categories × two modes; no model required.')
+import http.cookiejar
+jar=http.cookiejar.CookieJar()
+client=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar))
+def support(path,data=None):
+    req=urllib.request.Request(base+'/api/support/'+path,
+        None if data is None else json.dumps(data).encode(),
+        {} if data is None else {'Content-Type':'application/json'})
+    with client.open(req,timeout=5) as response:
+        return json.load(response)
+support('start',{})
+assert support('workspace')['principal']=='alice'
+for mode in ('vulnerable','defended'):
+    result=support('chat',{'ticket_id':'B-202','question':'Summarize the ticket','mode':mode,'backend':'offline'})
+    assert result['observation']['private_field_disclosed']==(mode=='vulnerable')
+assert len(support('attempts'))==2
+print('PASS: session cookie, SQLite retrieval boundary, and stored history.')

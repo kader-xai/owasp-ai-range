@@ -6,9 +6,11 @@ published app port to loopback; never publish Ollama or the range on the Interne
 The code intentionally models unsafe application decisions. A public repository
 does not imply the vulnerable application is suitable for public hosting.
 
-There is no production authentication, multi-user isolation, durable audit store,
-distributed rate limiter, or security certification. Alice is a fixed server-side
-teaching identity. Review tasks are unverified observations in process memory.
+There is no production authentication, deployment-wide multi-user isolation,
+distributed rate limiter, or security certification. The migrated LLM02 workflow
+has workspace-isolated synthetic SQLite records and server-stored attempts;
+RANGE_DB enables persistence. This does not establish production tenant isolation.
+Legacy review tasks remain unverified observations in process memory.
 
 ## Boundaries retained in both teaching modes
 - Local Host/Origin validation and cross-site fetch rejection reduce browser-origin

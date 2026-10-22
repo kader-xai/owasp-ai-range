@@ -7,6 +7,12 @@ A local, vulnerable-by-design practice range aligned to the **OWASP LLM Top 10:2
 Learn the failure, inspect the boundary, apply a focused defense, and retest.
 Built for self-study, instructor-led workshops, and reproducible demonstrations.
 
+**Maturity:** this is an early prototype, not feature- or quality-parity with mature
+OWASP applications. The [architecture migration](docs/ARCHITECTURE.md) replaces
+shortcut exercises with domain workflows. LLM02 now uses a SQLite support portal,
+isolated learner workspaces and server-recorded observations; other categories
+remain focused prototype experiments.
+
 > **Intentionally vulnerable. Run on localhost with synthetic data only.**
 > Do not expose this application or Ollama to the Internet. This is an independent
 > project, not an official OWASP project, certification, or endorsement.

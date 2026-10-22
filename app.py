@@ -6,6 +6,9 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from scenarios import SCENARIOS, run_scenario
 from vision import run_vision
+from http.cookies import SimpleCookie
+from range_core.store import WorkspaceStore
+from labs.disclosure import DEFINITION, run_support
 
 CATEGORIES = ["Prompt Injection", "Sensitive Information Disclosure", "Supply Chain",
               "Data and Model Poisoning", "Improper Output Handling", "Excessive Agency",
@@ -181,6 +184,16 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if not self.local_request():
             return
+        if self.path == '/api/support/definition':
+            return self.send_json(200, DEFINITION)
+        if self.path in ('/api/support/workspace', '/api/support/attempts'):
+            try:
+                token = self.workspace_token()
+                store = self.server.workspace_store
+                return self.send_json(200, store.history(token) if self.path.endswith('attempts') else
+                    {'principal':store.identity(token),'tickets':store.list_owned(token)})
+            except PermissionError:
+                return self.send_json(401, {'error':'Start a learner workspace first'})
         if self.path == '/api/scenarios':
             return self.send_json(200, SCENARIOS)
         if self.path == '/api/model-status':
@@ -192,11 +205,12 @@ class Handler(BaseHTTPRequestHandler):
             return self.send_json(200, {"status": "ok"})
         if self.path == "/api/labs":
             return self.send_json(200, [{"id": f"LLM{i+1:02d}:2025", "name": name,
+                'architecture': 'workflow-v1' if i == 1 else 'prototype',
                 "status": "implemented" if i < 2 or f'LLM{i+1:02d}:2025' in SCENARIOS else "planned"} for i, name in enumerate(CATEGORIES)])
         scenario_page = self.path.startswith('/labs/') and self.path[6:] + ':2025' in SCENARIOS
         if self.path not in ('/', '/llm02', '/vision') and not scenario_page:
             return self.send_json(404, {"error": "Not found"})
-        body = Path(__file__).with_name('vision.html' if self.path == '/vision' else 'scenario.html' if scenario_page else 'disclosure.html' if self.path == '/llm02' else 'index.html').read_bytes()
+        body = Path(__file__).with_name('vision.html' if self.path == '/vision' else 'scenario.html' if scenario_page else 'support.html' if self.path == '/llm02' else 'index.html').read_bytes()
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
@@ -207,7 +221,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         if not self.local_request():
             return
-        if self.path not in ("/api/run", "/api/tasks"):
+        if self.path not in ("/api/run", "/api/tasks", '/api/support/start', '/api/support/chat'):
             return self.send_json(404, {"error": "Not found"})
         # Browser requests must come from this local application.
         if self.headers.get('Transfer-Encoding') or len(self.headers.get_all('Content-Length', [])) != 1:
@@ -226,20 +240,54 @@ class Handler(BaseHTTPRequestHandler):
                 raise ValueError("Request must be an object.")
             if size > MAX_BODY and not (data.get('lab') == 'LLM01:2025' and data.get('scenario') == 'image'):
                 return self.send_json(413, {'error': 'Text request exceeds lab limit'})
+            if self.path == '/api/support/start':
+                token = self.server.workspace_store.create()
+                self.send_response(201)
+                self.send_header('Set-Cookie','range_workspace='+token+'; HttpOnly; SameSite=Strict; Path=/api/support')
+                self.send_header('Content-Type','application/json')
+                self.send_header('Cache-Control','no-store')
+                self.end_headers()
+                self.wfile.write(b'{"principal":"alice","created":true}')
+                return
+            if self.path == '/api/support/chat':
+                token = self.workspace_token()
+                if not RUN_SLOT.acquire(blocking=False):
+                    raise ValueError('Another experiment is running')
+                try:
+                    result = run_support(self.server.workspace_store,token,data)
+                finally:
+                    RUN_SLOT.release()
+                return self.send_json(200,result)
             if self.path == '/api/tasks':
                 return self.send_json(201, create_task(data))
             return self.send_json(200, run_lab(data))
+        except PermissionError:
+            return self.send_json(401, {'error':'Start a learner workspace first'})
         except (ValueError, TypeError):
             return self.send_json(400, {"error": "Invalid lab input"})
         except Exception:
             return self.send_json(502, {"error": "Model unavailable. Start Ollama and load the configured model, or choose simulation."})
+
+    def workspace_token(self):
+        try:
+            cookie = SimpleCookie(self.headers.get('Cookie',''))
+            token = cookie['range_workspace'].value
+        except Exception:
+            raise PermissionError('Missing workspace')
+        self.server.workspace_store.identity(token)
+        return token
 
 class RangeServer(ThreadingHTTPServer):
     """Limit simultaneous HTTP workers; this is not a production server."""
     daemon_threads = True
     def __init__(self, *args, **kwargs):
         self.workers = BoundedSemaphore(16)
+        self.workspace_store = WorkspaceStore(os.environ.get('RANGE_DB',':memory:'))
         super().__init__(*args, **kwargs)
+
+    def server_close(self):
+        super().server_close()
+        self.workspace_store.close()
 
     def process_request(self, request, client_address):
         if not self.workers.acquire(blocking=False):

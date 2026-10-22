@@ -1,5 +1,10 @@
 # LLM02:2025 — Sensitive information disclosure
 
+> Migration note — October 22, 2026: `/llm02` now opens the database-backed
+> RangeDesk workflow described in [ARCHITECTURE.md](ARCHITECTURE.md). The older
+> keyword-based exercise below remains only in the `/api/run` compatibility API.
+> It is historical prototype documentation, not the current portal architecture.
+
 ## Simple explanation
 An assistant sees records it should never have received, then exposes them in
 an answer. It is like handing a clerk both customers’ envelopes and relying on

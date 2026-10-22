@@ -70,3 +70,31 @@ class HTTPTests(unittest.TestCase):
                 run_lab({})
         finally:
             RUN_SLOT.release()
+
+    def test_support_session_and_observation(self):
+        status, headers, _ = self.request('POST','/api/support/start','{}',{'Content-Type':'application/json'})
+        self.assertEqual(status,201)
+        self.assertIn('HttpOnly',headers['Set-Cookie'])
+        cookie=headers['Set-Cookie'].split(';')[0]
+        auth={'Cookie':cookie,'Content-Type':'application/json'}
+        status,_,body=self.request('GET','/api/support/workspace',headers=auth)
+        self.assertEqual(status,200)
+        self.assertEqual(len(json.loads(body)['tickets']),2)
+        for mode in ('vulnerable','defended'):
+            data={'ticket_id':'B-202','question':'Hello','backend':'offline','mode':mode,'principal':'bob'}
+            status,_,body=self.request('POST','/api/support/chat',json.dumps(data),auth)
+            self.assertEqual(status,200)
+            self.assertEqual(json.loads(body)['attack_observed'],mode=='vulnerable')
+        _,_,history=self.request('GET','/api/support/attempts',headers=auth)
+        self.assertEqual(len(json.loads(history)),2)
+        self.assertEqual(self.request('GET','/api/support/attempts')[0],401)
+
+    def test_support_workspaces_do_not_share_history(self):
+        cookies=[]
+        for _ in range(2):
+            _,headers,_=self.request('POST','/api/support/start','{}',{'Content-Type':'application/json'})
+            cookies.append(headers['Set-Cookie'].split(';')[0])
+        data={'ticket_id':'A-101','question':'Summary','backend':'offline','mode':'vulnerable'}
+        self.request('POST','/api/support/chat',json.dumps(data),{'Cookie':cookies[0],'Content-Type':'application/json'})
+        _,_,body=self.request('GET','/api/support/attempts',headers={'Cookie':cookies[1]})
+        self.assertEqual(json.loads(body),[])

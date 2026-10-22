@@ -1,13 +1,44 @@
 name: tests
 on: [push, pull_request]
+permissions:
+  contents: read
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        python: ['3.12', '3.13', '3.14']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python -m unittest discover -s tests -v
+  container:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: python -m unittest discover -s tests -v
+      - run: docker compose config --quiet && docker compose -f compose.local-model.yaml config --quiet
       - run: docker build -t ai-range .
+      - name: Start isolated container
+        run: docker run -d --name range-smoke --read-only --cap-drop ALL --security-opt no-new-privileges --pids-limit 64 --memory 256m -p 127.0.0.1:8088:8088 ai-range
+      - name: Wait for HTTP readiness
+        run: |
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8088/health; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+      - run: python scripts/smoke-http.py http://127.0.0.1:8088
+      - name: Container logs
+        if: always()
+        run: docker logs range-smoke
+      - name: Stop test container
+        if: always()
+        run: docker rm -f range-smoke
 

@@ -1,6 +1,7 @@
 """Local educational range. Synthetic data only; no executable model tools."""
 import json, os, urllib.request
-from threading import Lock
+from threading import Lock, BoundedSemaphore
+from urllib.parse import urlsplit
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from scenarios import SCENARIOS, run_scenario
@@ -15,6 +16,7 @@ MARKER = "PURPLE-PINEAPPLE"
 MAX_BODY = 16384
 TASKS = []
 TASK_LOCK = Lock()
+RUN_SLOT = BoundedSemaphore(1)
 PRIVATE_CODE = 'CEDAR-7429'
 RECORDS = [
     {'owner': 'alice', 'ticket': 'A-101', 'summary': 'Fictional delivery inquiry'},
@@ -78,6 +80,14 @@ def create_task(data):
         return task
 
 def run_lab(data):
+    if not RUN_SLOT.acquire(blocking=False):
+        raise ValueError('Another experiment is running; retry after completion')
+    try:
+        return _run_lab(data)
+    finally:
+        RUN_SLOT.release()
+
+def _run_lab(data):
     if data.get('lab') == 'LLM01:2025' and data.get('scenario') == 'image':
         return run_vision(data)
     if data.get('lab') in SCENARIOS:
@@ -126,6 +136,39 @@ def run_lab(data):
             "lesson": "For this narrow task, enforcing approved-source selection in code prevents uploaded instructions from reaching the model. This is not a general prompt-injection solution."}
 
 class Handler(BaseHTTPRequestHandler):
+    server_version = 'AI-Range'
+    sys_version = ''
+
+    def setup(self):
+        super().setup()
+        self.connection.settimeout(15)
+
+    def end_headers(self):
+        self.send_header('X-Content-Type-Options', 'nosniff')
+        self.send_header('Referrer-Policy', 'no-referrer')
+        self.send_header('X-Frame-Options', 'DENY')
+        super().end_headers()
+
+    def local_request(self):
+        host = self.headers.get('Host', '')
+        try:
+            parsed = urlsplit('http://' + host)
+            valid_host = parsed.hostname in ('127.0.0.1', 'localhost', '::1') and not parsed.username and not parsed.password and not parsed.path and not parsed.query and not parsed.fragment
+            parsed.port  # Reject malformed ports.
+        except ValueError:
+            valid_host = False
+        if not valid_host:
+            self.send_json(403, {'error': 'Use a localhost address; remote hosts are not supported'})
+            return False
+        origin = self.headers.get('Origin')
+        if origin and origin != 'http://' + host:
+            self.send_json(403, {'error': 'Cross-origin requests rejected'})
+            return False
+        if self.headers.get('Sec-Fetch-Site') == 'cross-site':
+            self.send_json(403, {'error': 'Cross-site requests rejected'})
+            return False
+        return True
+
     def send_json(self, code, value):
         body = json.dumps(value).encode()
         self.send_response(code)
@@ -136,6 +179,8 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_GET(self):
+        if not self.local_request():
+            return
         if self.path == '/api/scenarios':
             return self.send_json(200, SCENARIOS)
         if self.path == '/api/model-status':
@@ -160,17 +205,23 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_POST(self):
+        if not self.local_request():
+            return
         if self.path not in ("/api/run", "/api/tasks"):
             return self.send_json(404, {"error": "Not found"})
         # Browser requests must come from this local application.
-        origin = self.headers.get("Origin")
-        if origin and origin != "http://" + self.headers.get("Host", ""):
-            return self.send_json(403, {"error": "Cross-origin requests rejected"})
+        if self.headers.get('Transfer-Encoding') or len(self.headers.get_all('Content-Length', [])) != 1:
+            return self.send_json(400, {'error': 'Provide one Content-Length; transfer encoding is unsupported'})
+        if self.headers.get_content_type() != 'application/json':
+            return self.send_json(415, {'error': 'Use application/json'})
         try:
             size = int(self.headers.get("Content-Length", "0"))
             if size <= 0 or size > (1500000 if self.path == '/api/run' else MAX_BODY):
                 return self.send_json(413, {"error": "Invalid request size"})
-            data = json.loads(self.rfile.read(size))
+            raw = self.rfile.read(size)
+            if len(raw) != size:
+                raise ValueError('Incomplete request')
+            data = json.loads(raw)
             if not isinstance(data, dict):
                 raise ValueError("Request must be an object.")
             if size > MAX_BODY and not (data.get('lab') == 'LLM01:2025' and data.get('scenario') == 'image'):
@@ -183,5 +234,29 @@ class Handler(BaseHTTPRequestHandler):
         except Exception:
             return self.send_json(502, {"error": "Model unavailable. Start Ollama and load the configured model, or choose simulation."})
 
+class RangeServer(ThreadingHTTPServer):
+    """Limit simultaneous HTTP workers; this is not a production server."""
+    daemon_threads = True
+    def __init__(self, *args, **kwargs):
+        self.workers = BoundedSemaphore(16)
+        super().__init__(*args, **kwargs)
+
+    def process_request(self, request, client_address):
+        if not self.workers.acquire(blocking=False):
+            self.shutdown_request(request)
+            return
+        try:
+            super().process_request(request, client_address)
+        except Exception:
+            self.workers.release()
+            raise
+
+    def process_request_thread(self, request, client_address):
+        try:
+            super().process_request_thread(request, client_address)
+        finally:
+            self.workers.release()
+
 if __name__ == "__main__":
-    ThreadingHTTPServer((os.environ.get("BIND", "127.0.0.1"), int(os.environ.get("PORT", "8088"))), Handler).serve_forever()
+    print('AI Range: intentionally vulnerable teaching labs. Localhost use only; synthetic data only.', flush=True)
+    RangeServer((os.environ.get("BIND", "127.0.0.1"), int(os.environ.get("PORT", "8088"))), Handler).serve_forever()

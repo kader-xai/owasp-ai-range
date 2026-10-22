@@ -1,6 +1,65 @@
-# AI Range
-Independent educational project aligned to the OWASP LLM Top 10:2025.
-Not an official OWASP project or endorsement.
+# AI Range for LLM Security
+
+[![Tests and container smoke](https://github.com/kader-xai/owasp-ai-range/actions/workflows/tests.yml/badge.svg)](https://github.com/kader-xai/owasp-ai-range/actions/workflows/tests.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+A local, vulnerable-by-design practice range aligned to the **OWASP LLM Top 10:2025**.
+Learn the failure, inspect the boundary, apply a focused defense, and retest.
+Built for self-study, instructor-led workshops, and reproducible demonstrations.
+
+> **Intentionally vulnerable. Run on localhost with synthetic data only.**
+> Do not expose this application or Ollama to the Internet. This is an independent
+> project, not an official OWASP project, certification, or endorsement.
+
+![Local challenge workspace](docs/all-categories-preview.png)
+
+## Start in under a minute—no API key or model required
+
+```sh
+git clone https://github.com/kader-xai/owasp-ai-range.git
+cd owasp-ai-range
+python3 app.py
+```
+
+Requires Python 3.12+. Open **http://127.0.0.1:8088**. The default backend is a
+clearly labeled teaching simulation. Nothing is downloaded until you explicitly
+run a model setup command. No Python packages are required.
+
+For real local inference, install [Ollama](https://ollama.com/download), stop the
+running app, and use `bash scripts/start-local.sh`. The default text model is
+Qwen2.5:1.5b (approximately 986 MB download). The optional image lab uses a separate
+2.4 GB vision model. See [model setup](docs/LOCAL-MODEL.md) and [vision guide](docs/VISION.md).
+
+## Coverage, with honest boundaries
+
+| OWASP 2025 category | Hands-on scenario | Important limitation |
+| --- | --- | --- |
+| LLM01 Prompt Injection | Text document and real image-input redirection | Image target marker not fully reproduced in recorded run |
+| LLM02 Sensitive Information Disclosure | Cross-customer support records | Synthetic records; fixed demo identity, not login |
+| LLM03 Supply Chain | Modified supplier prompt bundle | JSON integrity check, not malicious model weights |
+| LLM04 Data and Model Poisoning | Corrupted knowledge before ingestion | No model training or persistent learned backdoor |
+| LLM05 Improper Output Handling | Inert HTML rendering versus encoding | No unrestricted XSS or command execution |
+| LLM06 Excessive Agency | Model proposal → local outbox adapter | No real email or SaaS calls |
+| LLM07 System Prompt Leakage | Fictional internal configuration label | No real credential or granted privilege |
+| LLM08 Vector and Embedding Weaknesses | Tenant filtering before cosine retrieval | Sparse vectors, not neural embedding inversion |
+| LLM09 Misinformation | Unsupported claim and citation verification | Narrow source registry, not universal fact checking |
+| LLM10 Unbounded Consumption | Work-plan admission versus budget | Projected overload only; hard demo cap stays active |
+
+Every category has a focused scenario, not exhaustive coverage. Real-model behavior
+varies. A marker is a challenge condition, not a security verdict. Read the
+[experiment guide](docs/EXPERIMENTS.md) and [recorded observations](docs/EXPERIMENT-VERIFICATION.md).
+
+## Project guide
+
+- [Quick start, configuration, and troubleshooting](docs/LOCAL-MODEL.md)
+- [Attack explanations and lab walkthroughs](docs/EXPERIMENTS.md)
+- [Proxy replay and local task integration](docs/WORKSPACE.md)
+- [Threat model and security policy](SECURITY.md)
+- [Contributing and evidence standards](CONTRIBUTING.md)
+- [Release notes](CHANGELOG.md)
+
+The first public release is an **alpha** for local education, not a production
+security product or statistically validated guardrail benchmark.
 
 ## Local range
 The workspace includes Explanation, Challenge mode, Interception & integrations,

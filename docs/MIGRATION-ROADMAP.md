@@ -1,31 +1,36 @@
-# Workflow migration status
+# Workflow scope and next milestones
 
-The public alpha is not equivalent in maturity to established OWASP applications.
-This document distinguishes shipped workflows from proposed work. No completion
-dates, benchmark outcomes, or finished capabilities are implied by the plan.
+All ten categories have modular workflows, but one scenario per category is not
+comprehensive risk coverage. The project remains a local educational alpha.
 
-| Category | Current architecture | Required next domain workflow |
+| Category | Implemented workflow | Next substantial milestone |
 |---|---|---|
-| LLM01 | Workflow: saved attachment → model proposal → transactional refund quote | More cases and repeated model evaluation; multimodal workflow still separate |
-| LLM02 | Workflow: session → SQL retrieval → assistant → observation | More customer tasks, lifecycle controls and session management |
-| LLM03 | Prototype prompt-bundle digest check | Model/dependency inventory, versioned import and provenance validation |
-| LLM04 | Prototype knowledge-ingestion fixture | Versioned corpus ingestion, quarantine/review and retrieval impact |
-| LLM05 | Prototype isolated formatting preview | Real message publishing surface with context-aware output handling |
-| LLM06 | Prototype in-memory outbox action | Persisted agent job, scoped tool adapter, approvals and action audit |
-| LLM07 | Prototype prompt label | Configuration service and reproducible context exposure cases |
-| LLM08 | Prototype sparse-vector retrieval | Permission-aware real embedding index and scoped source records |
-| LLM09 | Prototype source/value check | Grounded answer lifecycle, evidence verification and review queue |
-| LLM10 | Prototype budget planner | Persisted quota/admission service and bounded scheduler |
+| LLM01 | Saved attachment, real model proposal, atomic synthetic quote | Integrate image-input into the same workflow; repeated case evaluation |
+| LLM02 | Scoped SQL lookup, assistant, separate retrieval/disclosure evidence | More customer tasks; session lifecycle and real identity integration |
+| LLM03 | Versioned inert dependency, pinned digest, activation event | Artifact inventory, signed provenance; no unsafe weight loading |
+| LLM04 | Knowledge revision, review/quarantine, activation audit | Multi-document corpus versions; separately research training poisoning |
+| LLM05 | Stored publication, isolated formatting and encoded alternative | More context-specific sinks in disposable isolation |
+| LLM06 | Real model plan, persisted job and local outbox | Approval lifecycle, idempotency, bounded multi-step tool runs |
+| LLM07 | Workspace label, configuration exclusion, actual response check | More exposure cases and privilege-independent negative controls |
+| LLM08 | SQL sources, stored sparse/neural vectors, permission-aware ranking | Persistent larger index, ACL lifecycle, revocation and ranking cases |
+| LLM09 | Claim normalization, source review and publication | Multiple trusted sources, citation span checks, reviewer adjudication |
+| LLM10 | Cumulative reservations, job admission, capped executor | Concurrent scheduler, cancellation and measured usage reconciliation |
 
-## Migration gate
-Use the same domain workflow and model interface in vulnerable and defended paths.
-Only the identified trust-boundary enforcement should differ. The offline option
-must say what it actually does, never claim to have inferred an attack outcome.
-Every migration needs scoped data, server observations, negative tests, real HTTP
-checks, browser QA, and a container smoke check. Guard against unrelated mutations.
+## Acceptance gate
 
-## Explicitly not done
-No production login, internet-facing deployment, general prompt-injection solution,
-unrestricted malicious code execution, paid API integration, or statistical
-guardrail benchmark. The original compatibility exercise routes are retained for
-existing scripts but do not establish workflow maturity.
+Use the same domain objects and inference interface in both variants. Identify the
+policy that changes. Include baseline, attack fixture, negative case, stored effect
+and explicit evidence limits. Offline paths must name the component they run.
+Model-dependent outcomes must never be replaced with automatic success.
+
+Test unit/repository/HTTP boundaries, isolation, invalid input, rollback, browser
+interaction and container startup. For model claims preserve exact model, input,
+output, effect and timestamps. Repeat on more cases before reporting statistics.
+No completion dates or benchmark results are implied here.
+
+## Not supported
+
+Production login, public deployment, unrestricted execution, real account tools,
+paid API usage, universal factual verification, general prompt-injection prevention,
+trained-model poisoning or statistical guardrail certification. Legacy routes do
+not establish the maturity of new workflows.

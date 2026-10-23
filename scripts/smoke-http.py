@@ -9,7 +9,7 @@ def get(path):
 assert json.loads(get('/health'))['status']=='ok'
 labs=json.loads(get('/api/labs'))
 assert len(labs)==10
-for path in ['/', '/legacy/llm01', '/llm01', '/llm02', '/vision']+[f'/labs/LLM{i:02d}' for i in range(3,11)]:
+for path in ['/', '/legacy/llm01', '/llm01', '/llm02', '/vision']+[f'/{prefix}/LLM{i:02d}' for prefix in ('labs','workflows') for i in range(3,11)]:
     assert b'<!doctype html>' in get(path).lower(), path
 scenarios=json.loads(get('/api/scenarios'))
 cases=[{'lab':'LLM01:2025','question':'Summarize policy','document':'PURPLE-PINEAPPLE'},
@@ -23,7 +23,7 @@ for case in cases:
             result=json.load(response)
         assert isinstance(result['attack_observed'],bool)
         assert result['attack_observed'] == (mode=='vulnerable'), (case['lab'], mode)
-print('PASS: health, 13 pages, ten compatibility scenarios × two modes; no model required.')
+print('PASS: health, 21 pages, ten compatibility scenarios × two modes; no model required.')
 import http.cookiejar
 jar=http.cookiejar.CookieJar()
 client=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar))
@@ -51,3 +51,14 @@ assert not result['observation']['inference_ran']
 assert workflow('quotes')==[]
 assert len(workflow('history'))==3
 print('PASS: saved attachment, registry-driven workflow, context preview, no quote mutation.')
+for definition in json.loads(get('/api/workflows')):
+    if definition['id'] in ('LLM01:2025','LLM02:2025'):
+        continue
+    revision=workflow('attachment',{'content':definition['example']})['revision']
+    for mode in ('vulnerable','defended'):
+        result=workflow('run',{'lab':definition['id'],'revision':revision,'mode':mode,'backend':definition['backends'][0]})
+        assert result['lab']==definition['id']
+        assert isinstance(result['attack_observed'],bool)
+assert len(workflow('history'))==19
+assert workflow('events')
+print('PASS: eight domain modules × two modes, stored events and workspace history; offline/preview only.')

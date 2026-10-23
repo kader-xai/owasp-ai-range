@@ -190,11 +190,11 @@ class Handler(BaseHTTPRequestHandler):
             return self.send_json(200, openapi())
         if self.path == '/api/workflows':
             return self.send_json(200, definitions())
-        if self.path in ('/api/workflows/history', '/api/workflows/quotes'):
+        if self.path in ('/api/workflows/history', '/api/workflows/quotes', '/api/workflows/events'):
             try:
                 token = self.workspace_token()
                 store = self.server.workspace_store
-                return self.send_json(200,store.quotes(token) if self.path.endswith('quotes') else store.history(token))
+                return self.send_json(200,store.quotes(token) if self.path.endswith('quotes') else store.events(token) if self.path.endswith('events') else store.history(token))
             except PermissionError:
                 return self.send_json(401,{'error':'Start a learner workspace first'})
         if self.path == '/api/support/definition':
@@ -221,9 +221,10 @@ class Handler(BaseHTTPRequestHandler):
                 'architecture': 'workflow-v1' if f'LLM{i+1:02d}:2025' in WORKFLOWS else 'prototype',
                 "status": "implemented" if i < 2 or f'LLM{i+1:02d}:2025' in SCENARIOS else "planned"} for i, name in enumerate(CATEGORIES)])
         scenario_page = self.path.startswith('/labs/') and self.path[6:] + ':2025' in SCENARIOS
-        if self.path not in ('/', '/legacy/llm01', '/llm01', '/llm02', '/vision') and not scenario_page:
+        workflow_page=self.path.startswith('/workflows/') and self.path[11:]+':2025' in WORKFLOWS and self.path not in ('/workflows/LLM01','/workflows/LLM02')
+        if self.path not in ('/', '/legacy/llm01', '/llm01', '/llm02', '/vision') and not scenario_page and not workflow_page:
             return self.send_json(404, {"error": "Not found"})
-        body = Path(__file__).with_name('catalogue.html' if self.path == '/' else 'refund.html' if self.path == '/llm01' else 'vision.html' if self.path == '/vision' else 'scenario.html' if scenario_page else 'support.html' if self.path == '/llm02' else 'index.html').read_bytes()
+        body = Path(__file__).with_name('workflow.html' if workflow_page else 'catalogue.html' if self.path == '/' else 'refund.html' if self.path == '/llm01' else 'vision.html' if self.path == '/vision' else 'scenario.html' if scenario_page else 'support.html' if self.path == '/llm02' else 'index.html').read_bytes()
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
@@ -290,7 +291,7 @@ class Handler(BaseHTTPRequestHandler):
         except (ValueError, TypeError):
             return self.send_json(400, {"error": "Invalid lab input"})
         except Exception:
-            return self.send_json(502, {"error": "Model unavailable. Start Ollama and load the configured model, or choose simulation."})
+            return self.send_json(502, {"error": "Model operation unavailable. Check Ollama and the configured text/embedding models, or use offline/preview where offered."})
 
     def workspace_token(self):
         try:

@@ -1,7 +1,7 @@
 # Architecture upgrade: workflows, not marker demos
 
 ## Quality standard
-The public alpha contains focused prototype experiments. It must not be represented
+The public alpha contains bounded workflows and older compatibility experiments. It must not be represented
 as having the maturity of established OWASP training applications. A passing marker
 or a polished README does not establish realistic vulnerability behavior.
 
@@ -86,9 +86,18 @@ configuration has not been execution-tested.
 6. Unit, repository, HTTP, isolation, invalid-input, and negative tests.
 7. Browser verification and Docker smoke verification.
 
-LLM01 and LLM02 are migrated workflows. LLM03–LLM10 still need equivalent
-domain-workflow migrations. Real embedding stores, model artifact provenance,
-grounded answer pipelines, and bounded agent workflows require separate milestones.
+All ten categories now dispatch to domain modules through the registry. The
+additional modules use the same saved revisions, workspace isolation and atomic
+effect/evidence storage. A persisted event is the application's local effect:
+dependency activation, corpus quarantine, publication, job/outbox, configuration
+observation, vector-index/retrieval audit, claim review and quota reservation.
+No remote side effect or hidden production service is implied.
+
+LLM08 can call real Ollama embeddings; its index is stored as an attempt event.
+Offline explicitly uses sparse word-count vectors. LLM06 remains a one-step
+structured planner, and LLM10 serial admission runs under the HTTP experiment
+semaphore. A production concurrent scheduler is not implemented. See the
+[all-ten workflow guide](WORKFLOW-GUIDE.md) and [scope matrix](MIGRATION-ROADMAP.md).
 
 ## LLM01 / Refund operations
 `labs/refund.py` turns a saved attachment into a structured model proposal. The
@@ -110,7 +119,8 @@ metadata; `/api/openapi.json` describes the workflow contract. Additional APIs:
 - `POST /api/workflows/attachment`: save content and return a revision.
 - `POST /api/workflows/run`: run a registered lab in the caller's workspace.
 - `GET /api/workflows/quotes`: list that workspace's applied synthetic quotes.
-- `GET /api/workflows/history`: stored attempts from both migrated workflows.
+- `GET /api/workflows/history`: stored attempts from all registered workflows.
+- `GET /api/workflows/events`: workspace-scoped domain events with lab and kind.
 
 New workspace cookies use Path=/api so both workflows share a learner session.
 An older Path=/api/support cookie may require creating a fresh workspace for new
@@ -124,7 +134,7 @@ The root catalogue uses API architecture metadata to label workflows and prototy
 the original LLM01 exercise is retained at `/legacy/llm01` rather than being
 presented as the default application.
 
-## Validation of this slice — October 22, 2026
+## Historical validation of the LLM02 slice — October 22, 2026
 43 tests passed locally, including the real HTTP cookie/lookup/history path.
 Browser checks verified own-ticket baseline, cross-customer offline disclosure,
 defended lookup, real Qwen2.5:1.5b disclosure, defended empty context, and export.

@@ -1,6 +1,15 @@
 # Changelog
 
 ## Unreleased — workflow architecture migration
+- All ten categories now have registered domain modules. LLM03–LLM10 add
+  dependency activation, corpus quarantine, message publication, agent jobs/outbox,
+  configuration observation, retrieval audit, claim review and cumulative quotas.
+- Domain events and attempts commit atomically and remain workspace-scoped.
+- Optional real Ollama embeddings; explicit sparse offline retrieval remains.
+- Shared saved-revision UI, mode comparison, server events and evidence export.
+- All-ten workflow guide distinguishes each mechanism, negative check and exclusion.
+- 78 tests; additional adapter validation, baseline checks and publication scoring
+  ensure stripped unsupported markup is not misreported as interpreted formatting.
 - LLM01 refund workflow: immutable attachment revisions, structured real-model
   proposals, server policy enforcement and atomic quote/evidence transactions.
 - Shared workflow registry and OpenAPI document; preview mode does not simulate inference.
@@ -12,7 +21,7 @@
   private fields replace a globally hardcoded success marker in this workflow.
 - 43 tests including real HTTP sessions, storage reopening, isolation, identity
   override rejection, and model refusal without concealing retrieval failure.
-- Existing alpha remains a prototype. Other labs are not yet migrated.
+- Existing release is an alpha; new module availability is not exhaustive coverage.
 
 ## v0.1.0-alpha.1 — 2026-10-22
 

@@ -27,7 +27,7 @@ class HTTPTests(unittest.TestCase):
         return result
 
     def test_pages_and_security_headers(self):
-        for path in ['/', '/legacy/llm01', '/llm01', '/llm02', '/vision'] + [f'/labs/LLM{i:02d}' for i in range(3, 11)]:
+        for path in ['/', '/legacy/llm01', '/llm01', '/llm02', '/vision'] + [f'/{prefix}/LLM{i:02d}' for prefix in ('labs','workflows') for i in range(3, 11)]:
             status, headers, body = self.request('GET', path)
             self.assertEqual(status, 200, path)
             self.assertEqual(headers['X-Content-Type-Options'], 'nosniff')
@@ -115,4 +115,23 @@ class HTTPTests(unittest.TestCase):
         self.assertEqual(len(json.loads(self.request('GET','/api/workflows/history',headers=auth)[2])),1)
         self.assertEqual(self.request('GET','/api/workflows/history')[0],401)
         definitions=json.loads(self.request('GET','/api/workflows')[2])
-        self.assertEqual(len(definitions),2)
+        self.assertEqual(len(definitions),10)
+
+    def test_registered_domain_workflows_over_http(self):
+        _,headers,_=self.request('POST','/api/support/start','{}',{'Content-Type':'application/json'})
+        auth={'Cookie':headers['Set-Cookie'].split(';')[0],'Content-Type':'application/json'}
+        definitions=json.loads(self.request('GET','/api/workflows')[2])
+        for definition in definitions:
+            if definition['id'] in ('LLM01:2025','LLM02:2025'):
+                continue
+            for mode in ('vulnerable','defended'):
+                status,_,body=self.request('POST','/api/workflows/attachment',json.dumps({'content':definition['example']}),auth)
+                self.assertEqual(status,201)
+                payload={'lab':definition['id'],'revision':json.loads(body)['revision'],'backend':definition['backends'][0],'mode':mode}
+                status,_,body=self.request('POST','/api/workflows/run',json.dumps(payload),auth)
+                self.assertEqual(status,200,(definition['id'],body))
+                self.assertIsInstance(json.loads(body)['attack_observed'],bool)
+        self.assertEqual(len(json.loads(self.request('GET','/api/workflows/history',headers=auth)[2])),16)
+        events=json.loads(self.request('GET','/api/workflows/events',headers=auth)[2])
+        self.assertTrue(events)
+        self.assertEqual(self.request('GET','/api/workflows/events')[0],401)

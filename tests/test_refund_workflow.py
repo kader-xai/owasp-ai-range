@@ -55,7 +55,7 @@ class RefundWorkflowTests(unittest.TestCase):
             self.store.read_attachment(other,self.revision)
 
     def test_registry_contract(self):
-        self.assertEqual({x['id'] for x in definitions()},{'LLM01:2025','LLM02:2025'})
+        self.assertEqual(len(definitions()),10)
         self.assertTrue(all(x['architecture']=='workflow-v1' for x in definitions()))
 
     def test_capacity_failure_prevents_business_effect(self):

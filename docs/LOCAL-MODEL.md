@@ -50,6 +50,32 @@ The host.docker.internal setting targets Docker Desktop; Linux needs explicit
 host-gateway configuration. Both Compose files default to the same small model.
 
 ## Real experiment
+### Optional LLM08 embedding model
+
+The retrieval workflow supports actual neural embeddings in addition to the
+explicit offline word-count path. Install the small embedding-only model:
+
+```sh
+ollama pull nomic-embed-text:latest
+```
+
+Keep Qwen2.5:1.5b installed too: one model embeds source documents, the other
+generates the answer. Open `/workflows/LLM08` and select Ollama. The evidence
+records model, dimension, source IDs, vectors, ranking and ownership decisions.
+Set `OLLAMA_EMBED_MODEL` on the app process to use another compatible embedding
+model. The Ollama endpoint must support `/api/embed`. Missing models cause a real
+error, not a silent switch to sparse vectors.
+
+For the all-Docker stack, explicitly download inside its model service:
+
+```sh
+docker compose -f compose.local-model.yaml exec ollama ollama pull nomic-embed-text:latest
+```
+
+Only the text model is installed by the default setup service. Embedding vectors
+are persisted as per-attempt index events, not in a standalone vector database.
+
+### Compatibility experiment
 With Ollama running and the model downloaded:
 
 ```sh

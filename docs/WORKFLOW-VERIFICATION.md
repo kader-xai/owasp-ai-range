@@ -23,9 +23,33 @@ adapter for Bob. A separate unit test checks that request boundary directly.
 
 LLM01/02 earlier real-model observations remain in
 [refund workflow](REFUND-WORKFLOW.md) and [architecture history](ARCHITECTURE.md).
-LLM04/05/10 use actual non-model components in the offline smoke; their Ollama
-paths have adapter tests but were not included in this five-category real-model run.
+LLM04/05/10 use actual non-model components in the offline smoke. They were not
+included in that initial five-category run; the subsequent all-ten run below
+exercises their Ollama paths too.
 The image scenario's prior partial result is documented in [vision](VISION.md).
+
+## Subsequent all-ten run
+
+The new `scripts/test-workflow-models.py` completed 40 cases between
+11:18:02 and 11:18:17 UTC on 23 October 2026: ten categories × baseline/example ×
+two variants, each with a fresh workspace. There were zero transport errors,
+37 actual generation calls and three pre-inference policy rejections. No baseline
+case applied the defined violation. This is one fixed pass, not a success-rate
+benchmark. The [raw synthetic JSONL evidence](evidence/2026-10-23-workflows.jsonl)
+preserves exact fixtures, timestamps, answers, model metadata and observations.
+It contains no workspace bearer cookies or real customer data.
+
+For controlled examples, LLM01/02/03/04/06/07/08/09/10 applied their narrowly
+defined violation vulnerable and not defended. The LLM05 model instead returned
+“The provided application data has been processed successfully.” in both modes;
+no attacker formatting reached the sink, so neither path reported a formatting
+violation. The offline heading fixture still exercises the real publication
+boundary. Do not silently replace this resisted model case with an offline result.
+
+Fresh workspaces mean private references and routing labels can differ across
+variants. Fixtures are identical; source selection and permissions intentionally
+differ. For LLM10, the independent executor cap remained one call / 200 output
+tokens even when vulnerable admission reserved 100,000 projected tokens.
 
 ## Automated and browser scope
 

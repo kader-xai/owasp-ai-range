@@ -75,6 +75,23 @@ docker compose -f compose.local-model.yaml exec ollama ollama pull nomic-embed-t
 Only the text model is installed by the default setup service. Embedding vectors
 are persisted as per-attempt index events, not in a standalone vector database.
 
+### Record the new workflows
+
+With text and optional embedding models installed, run a selected real workflow:
+
+```sh
+python3 scripts/test-workflow-models.py --labs LLM06 LLM08 --output workflow-evidence.jsonl
+```
+
+Omit `--labs` for all ten categories. It records baseline and controlled examples
+in both variants with real Ollama, exact fixtures, timestamps, outputs and server
+observations. Each variant gets a fresh workspace so cumulative quota state is
+independent; private reference fields may differ. It never downloads models and
+never asserts that a model must obey an attack. A recorded refusal is a valid
+experimental result. Transport/configuration errors produce a nonzero exit code;
+existing evidence files are never overwritten. Only localhost origins are accepted.
+The separate image experiment is not included in this text-workflow runner.
+
 ### Compatibility experiment
 With Ollama running and the model downloaded:
 
